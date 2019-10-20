@@ -1,0 +1,284 @@
+[
+    {
+        "id": "e6276f48.85f4a",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "7da90c82.46ef84",
+        "type": "serial-port",
+        "z": "",
+        "serialport": "/dev/ttyACM0",
+        "serialbaud": "115200",
+        "databits": "8",
+        "parity": "none",
+        "stopbits": "1",
+        "waitfor": "",
+        "newline": "\\n",
+        "bin": "false",
+        "out": "char",
+        "addchar": "",
+        "responsetimeout": "10000"
+    },
+    {
+        "id": "4fd6025e.58a5fc",
+        "type": "MySQLdatabase",
+        "z": "",
+        "host": "127.0.0.1",
+        "port": "3306",
+        "db": "datalog",
+        "tz": "GMT -3"
+    },
+    {
+        "id": "9ca285d7.342138",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "CloudMqtt-Realtime",
+        "broker": "soldier.cloudmqtt.com",
+        "port": "11425",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": true,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    },
+    {
+        "id": "73b70667.3c3968",
+        "type": "serial in",
+        "z": "e6276f48.85f4a",
+        "name": "ARDUINO",
+        "serial": "7da90c82.46ef84",
+        "x": 160,
+        "y": 160,
+        "wires": [
+            [
+                "7dae449d.c7425c",
+                "f35edb9c.e3bb18",
+                "7875d84e.af8f38"
+            ]
+        ]
+    },
+    {
+        "id": "f35edb9c.e3bb18",
+        "type": "debug",
+        "z": "e6276f48.85f4a",
+        "name": "DadosDEBUD",
+        "active": false,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 550,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "fabe2025.caad",
+        "type": "http response",
+        "z": "e6276f48.85f4a",
+        "name": "responseBuscaPorData",
+        "statusCode": "200",
+        "headers": {},
+        "x": 990,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "bd9d6336.cc5c4",
+        "type": "mysql",
+        "z": "e6276f48.85f4a",
+        "mydb": "4fd6025e.58a5fc",
+        "name": "DB MySql",
+        "x": 700,
+        "y": 460,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7dae449d.c7425c",
+        "type": "function",
+        "z": "e6276f48.85f4a",
+        "name": "InserirDados",
+        "func": "\nvar dados = msg.payload.split(\"|\");\n\nntu = dados[0];\nph  = dados[1];\n\n\nmsg.topic = 'INSERT INTO tb_qualidade_log (`ph`,`ntu`) values (' + ph + ',' + ntu + ');';\n\nmsg.payload = ph + \"|\" + ntu;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 330,
+        "y": 380,
+        "wires": [
+            [
+                "bd9d6336.cc5c4",
+                "ffd11832.d6b298"
+            ]
+        ]
+    },
+    {
+        "id": "c2e0d91f.a64068",
+        "type": "http in",
+        "z": "e6276f48.85f4a",
+        "name": "buscaPorData",
+        "url": "/buscaPorData/:data",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 470,
+        "y": 240,
+        "wires": [
+            [
+                "f175e816.bb8148"
+            ]
+        ]
+    },
+    {
+        "id": "f175e816.bb8148",
+        "type": "function",
+        "z": "e6276f48.85f4a",
+        "name": "buscaPorData",
+        "func": "\n\n//if(msg.req.params.id == 1){\n//    msg.payload = \"1\";\n//}else {\n    \n//msg.payload = \"123\"\n//}\n\n\n\ndia = msg.req.params.data;\n\n\n\nquery = \"select ntu, ph, data from tb_qualidade_log where Date(data) = \" + '\"'  + dia + '\"' ;\n\nconsole.log(query);\n\nmsg.topic = query;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 640,
+        "y": 240,
+        "wires": [
+            [
+                "55732df6.46c794"
+            ]
+        ]
+    },
+    {
+        "id": "ffd11832.d6b298",
+        "type": "mqtt out",
+        "z": "e6276f48.85f4a",
+        "name": "MqttRealTime",
+        "topic": "dados",
+        "qos": "",
+        "retain": "",
+        "broker": "9ca285d7.342138",
+        "x": 640,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "7875d84e.af8f38",
+        "type": "delay",
+        "z": "e6276f48.85f4a",
+        "name": "DelayExpurgo",
+        "pauseType": "delay",
+        "timeout": "7",
+        "timeoutUnits": "days",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "x": 260,
+        "y": 560,
+        "wires": [
+            [
+                "e0b43fd6.f5b8c"
+            ]
+        ]
+    },
+    {
+        "id": "e0b43fd6.f5b8c",
+        "type": "function",
+        "z": "e6276f48.85f4a",
+        "name": "RotinaExpurgo",
+        "func": "\n//obter a data atual\n\nvar hoje = new Date();\nvar dataExpurgo = new Date(hoje.getTime() - (7 *24*60*60*1000));\n\n\n\nvar dataFormatada = dataExpurgo.getFullYear() + '-' + (dataExpurgo.getMonth() + 1) + '-' + dataExpurgo.getDate();  \n\nconsole.log(dataFormatada);\n\n\nvar query = \"Delete from tb_qualidade_log where data < \" + dataFormatada;\n\n\nconsole.log(\"DELETANDO DADOS DA BASE\");\n\nmsg.topic = query;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 480,
+        "y": 560,
+        "wires": [
+            [
+                "bd9d6336.cc5c4"
+            ]
+        ]
+    },
+    {
+        "id": "55732df6.46c794",
+        "type": "mysql",
+        "z": "e6276f48.85f4a",
+        "mydb": "4fd6025e.58a5fc",
+        "name": "",
+        "x": 800,
+        "y": 240,
+        "wires": [
+            [
+                "fabe2025.caad"
+            ]
+        ]
+    },
+    {
+        "id": "91c4fed4.60876",
+        "type": "http response",
+        "z": "e6276f48.85f4a",
+        "name": "responseBuscaPorPeriodo",
+        "statusCode": "200",
+        "headers": {},
+        "x": 1000,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "3395736.f383e8c",
+        "type": "http in",
+        "z": "e6276f48.85f4a",
+        "name": "buscaPorPeriodo",
+        "url": "/buscaPorPeriodo",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 440,
+        "y": 300,
+        "wires": [
+            [
+                "e3ea94e2.4afe58"
+            ]
+        ]
+    },
+    {
+        "id": "e3ea94e2.4afe58",
+        "type": "function",
+        "z": "e6276f48.85f4a",
+        "name": "buscaPorPeriodo",
+        "func": "\n\ndataInicial = msg.req.query.dataInicial;\ndataFinal = msg.req.query.dataFinal;\n\nvar query = 'SELECT ntu, ph, data from tb_qualidade_log where Date(data) BETWEEN ' + '\"'+dataInicial+ '\"' + ' and ' + '\"' + dataFinal + '\"';\n\nmsg.topic = query;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 630,
+        "y": 300,
+        "wires": [
+            [
+                "df002a7f.c833c8"
+            ]
+        ]
+    },
+    {
+        "id": "df002a7f.c833c8",
+        "type": "mysql",
+        "z": "e6276f48.85f4a",
+        "mydb": "4fd6025e.58a5fc",
+        "name": "",
+        "x": 800,
+        "y": 300,
+        "wires": [
+            [
+                "91c4fed4.60876"
+            ]
+        ]
+    }
+]
